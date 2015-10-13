@@ -12,28 +12,48 @@
  First create the tree config like below:
 
     treeConfig = {
-      checkPoint : { // checkPoint is the point of current root path
+      /* checkPoint is the point of the current root resource, when path like: /company/1/team/2
+       * mean:
+       * 1. match any method
+       * 2. id == 1
+       * 3. cb(false) return verify fail, cb(true) this point verify pass and goto endPoint verify
+       */
+      checkPoint : { 
         "*": function (req, res, id, cb) {
           .... // some code
           if(!verifyIdPermittedByCurrentLoginUser(id))
             cb(false); // return false when verify fail
         }
       },
-      endPoint : {// endPoint is the ponit of the end path and also root point
+     
+      /* endPoint is the point of the end resource, match when path like : /team/2, but not match when path like : /team/2/project/3
+       * mean:
+       * 1. match only get method
+       * 2. id == 2
+       * 3. cb(false) return verify fail, cb(true) this point verify pass
+       */
+      endPoint : {
         "get" :function (req, res, id, cb) {
           endPoint = true;
           cb(true); // return true when verify success
         }
       },
-      anyEndPoint : { // any end point in the path such as:/projects/1/todos/99/users/10
+      
+      /* any end point in the path,  when path like:/projects/1/todos/99/users/10
+       * mean:
+       * 1. end resource "users" and match only post method
+       * 2. id == 10
+       * 3. cb(false) return verify fail, cb(true) this point verify pass and goto nextLeaf that have defined
+       */
+      anyEndPoint : { 
 	      "users" :{
-			"post" : function(){
+			"post" : function(req, res, id, cb){
 				  return false;
 				}
 			}
-		},
+	    },
 		nextLeaf : {
-			... // next config of next path
+			... // treeConfig of next leaf path, if the path is /company/1/team/2/project/3, then next path is /team/2/project/3 and nextLeaf is corresponding config
 		}
     }
 
