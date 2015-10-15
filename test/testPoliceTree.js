@@ -9,22 +9,14 @@ describe('policeTree', function(){
     var call = function (msg) {
       assert.equal(msg, "forbidden");
       assert.equal(checkPointCall, true);
-      assert.equal(endPoint, false);
       done();
     };
     var checkPointCall = false;
-    var endPoint = false;
     treeConfig = {
       checkPoint : {
         "*": function (req, res, id, cb) {
           checkPointCall = true;
           cb(false);
-        }
-      },
-      endPoint : {
-        "*" :function (req, res, id, cb) {
-          endPoint = true;
-          cb(true);
         }
       }
     }
@@ -106,45 +98,8 @@ describe('policeTree', function(){
     }, treeConfig);
   });
 
-  it('endPoint case', function(done){
-    var call = function (msg) {
-      assert.equal(msg, "next");
-      assert.equal(checkPointCall, true);
-      assert.equal(endPoint, true);
-      assert.equal(companyId, "company_id");
-      done();
-    };
-    var checkPointCall = false;
-    var endPoint = false;
-    var companyId;
-    treeConfig = {
-      checkPoint : {
-        "post get": function (req, res, id, cb) {
-          checkPointCall = true;
-          companyId = id;
-          cb(true);
-        }
-      },
-      endPoint : {
-        "*" :function (req, res, id, cb) {
-          endPoint = true;
-          cb(true);
-        }
-      }
-    }
-    policeTree({
-      method : "get",
-      path : "/company/company_id"
-    },{
-      forbidden : function(err){
-        call("forbidden");
-      }
-    },function () {
-      call("next");
-    }, treeConfig);
-  });
 
-  it('anyEndPoint case', function(done){
+  it('endPoint case', function(done){
     var call = function (msg) {
       assert.equal(msg, "next");
       assert.equal(checkPointCall, false);
@@ -167,12 +122,6 @@ describe('policeTree', function(){
         }
       },
       endPoint : {
-        "*" :function (req, res, id, cb) {
-          endPoint = true;
-          cb(true);
-        }
-      },
-      anyEndPoint : {
          comments : {
            "put" : function (req, res, id, cb) {
              commentId = id;
@@ -206,7 +155,6 @@ describe('policeTree', function(){
       assert.equal(checkPointCall, true);
       assert.equal(endPoint, false);
       assert.equal(nextLeaf_checkPointCall, true);
-      assert.equal(nextLeaf_endPointCall, false);
       assert.equal(comments, false);
       assert.equal(attachments, false);
       assert.equal(commentId, false);
@@ -216,7 +164,6 @@ describe('policeTree', function(){
     var checkPointCall = false;
     var endPoint = false;
     var nextLeaf_checkPointCall = false;
-    var nextLeaf_endPointCall = false;
     var comments = false;
     var attachments = false;
     var commentId = false;
@@ -229,12 +176,6 @@ describe('policeTree', function(){
         }
       },
       endPoint : {
-        "*" :function (req, res, id, cb) {
-          endPoint = true;
-          cb(true);
-        }
-      },
-      anyEndPoint : {
         comments : {
           "put" : function (req, res, id, cb) {
             commentId = id;
@@ -255,12 +196,6 @@ describe('policeTree', function(){
             nextLeaf_checkPointCall = true;
             projectId = id;
             cb(true);
-          }
-        },
-        endPoint : {
-          "*" :function (req, res, id, cb) {
-            nextLeaf_endPointCall = true;
-            cb(false);
           }
         }
       }
@@ -303,12 +238,10 @@ describe('policeTree', function(){
     done();
   });
   it('trimDivide', function(done) {
-    var result = policeTree.trimDivide("/company/company_id/projects/1");
-    assert.equal(result, "/company/company_id/projects/1");
-    var result = policeTree.trimDivide("/company/company_id/projects/1/");
-    assert.equal(result, "/company/company_id/projects/1");
-    var result = policeTree.trimDivide("/company/company_id/projects/1////");
-    assert.equal(result, "/company/company_id/projects/1");
+    var expect = "/company/company_id/projects/1";
+    assert.equal(policeTree.trimDivide("/company/company_id/projects/1"), expect);
+    assert.equal(policeTree.trimDivide("/company/company_id/projects/1/"), expect);
+    assert.equal(policeTree.trimDivide("/company/company_id/projects/1////"), expect);
     done();
   });
 })

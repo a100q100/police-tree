@@ -99,32 +99,17 @@ module.exports = function (req, res, next, tree, path) {
 		defer.resolve(result);
 		return defer.promise;
 	};
+
 	var endPoint = function () {
 		var defer = q.defer();
 		var result = true;
-		if(isEndPoint && tree.endPoint){
-			var check = matchMethod(tree.endPoint, method);
-			if(check){
-				check(req, res, id, function (result) {
-					defer.resolve(result !== false);
-				});
-				return defer.promise;
-			}
-		}
-		defer.resolve(result);
-		return defer.promise;
-	};
 
-	var anyEndPoint = function () {
-		var defer = q.defer();
-		var result = true;
-
-		if(tree.anyEndPoint
+		if(tree.endPoint
 			&& /\/(deep\/)?[^\/]+\/[^\/]+\/([^\/]+)\/?(([^\/]+)\/?)?$/gi.test(path)){
 			var leaf = RegExp.$2;
 			var leafId = RegExp.$4;
-			if (tree.anyEndPoint[leaf]) {
-				var check = matchMethod(tree.anyEndPoint[leaf], method);
+			if (tree.endPoint[leaf]) {
+				var check = matchMethod(tree.endPoint[leaf], method);
 				if(check){
 					check(req, res, leafId, function (result) {
 						defer.resolve(result !== false);
@@ -145,17 +130,11 @@ module.exports = function (req, res, next, tree, path) {
 		}
 	};
 	// if response forbidden, you can check the forbidden message below to get the block point
-	checkPoint().then(function (result) {
-		if(result){
-			endPoint().then(function (result2) {
-				if(result2){
-					anyEndPoint().then(function (result3) {
-						if(result3){
-							nextLeaf();
-						}else{
-							res.forbidden("forbidden by police tree with anyEndPoint")
-						}
-					})
+	checkPoint().then(function (resultFromCheckPoint) {
+		if(resultFromCheckPoint){
+			endPoint().then(function (resultFromEndPoint) {
+				if(resultFromEndPoint){
+					nextLeaf();
 				}else{
 					res.forbidden("forbidden by police tree with endPoint")
 				}
